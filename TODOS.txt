@@ -1,1 +1,3 @@
-add clipboard fetch to the 
+1. add clipboard fetch to the keyboard logger
+
+2. 

